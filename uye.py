@@ -1,217 +1,208 @@
-import sqlite3
 import json
 import os
 
-# ---------------------------
-# Veritabanı Bağlantısı
-# ---------------------------
-def baglanti():
-    return sqlite3.connect("kutuphane.db")
+UYE_DOSYA = "uye.json"
+KITAP_DOSYA = "kitap.json"
 
-# ---------------------------
-# Tablo Oluşturma
-# ---------------------------
-def tablolar_olustur():
-    conn = baglanti()
-    cursor = conn.cursor()
+# ------------------ DOSYA OLUŞTURMA ------------------
+def dosya_olustur(dosya):
+    if not os.path.exists(dosya):
+        with open(dosya, "w", encoding="utf-8") as f:
+            json.dump([], f, indent=4, ensure_ascii=False)
 
-    # Üyeler tablosu
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS uyeler (
-        id INTEGER PRIMARY KEY,
-        ad TEXT NOT NULL,
-        tel TEXT,
-        adress TEXT
-    )
-    """)
+dosya_olustur(UYE_DOSYA)
+dosya_olustur(KITAP_DOSYA)
 
-    # Kitaplar tablosu
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS kitaplar (
-        id INTEGER PRIMARY KEY,
-        ad TEXT NOT NULL
-    )
-    """)
+# ------------------ JSON İŞLEMLERİ ------------------
+def json_oku(dosya):
+    """Dosyayı oku ve liste döndür. Bozuk veya string elemanları temizle."""
+    with open(dosya, "r", encoding="utf-8") as f:
+        try:
+            veri = json.load(f)
+        except json.JSONDecodeError:
+            print(f"{dosya} okunamadı veya bozuk!")
+            return []
+    
+    temiz_veri = []
+    if isinstance(veri, list):
+        for k in veri:
+            if isinstance(k, dict):
+                temiz_veri.append(k)
+            elif isinstance(k, str):
+                try:
+                    k = json.loads(k)
+                    if isinstance(k, dict):
+                        temiz_veri.append(k)
+                except json.JSONDecodeError:
+                    continue
+    return temiz_veri
 
-    # Emanetler tablosu
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS emanetler (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        uye_id INTEGER,
-        kitap_id INTEGER,
-        FOREIGN KEY (uye_id) REFERENCES uyeler(id),
-        FOREIGN KEY (kitap_id) REFERENCES kitaplar(id)
-    )
-    """)
+def json_yaz(dosya, veri):
+    """Veriyi JSON olarak dosyaya yazar."""
+    with open(dosya, "w", encoding="utf-8") as f:
+        json.dump(veri, f, indent=4, ensure_ascii=False)
 
-    # Eğer eski uyeler tablosu varsa eksik sütunları ekle
+# ------------------ ÜYE İŞLEMLERİ ------------------
+def uyeleri_listele():
+    uyeler = json_oku(UYE_DOSYA)
+    print("\n--- ÜYELER ---")
+    if not uyeler:
+        print("Kayıtlı üye yok.\n")
+        return
+    for u in uyeler:
+        print(f"ID: {u['id']}, Ad: {u['uye_adi']}, Tel: {u['tel']}, Adres: {u['adress']}")
+    print()
+
+def uye_ekle():
+    uyeler = json_oku(UYE_DOSYA)
     try:
-        cursor.execute("ALTER TABLE uyeler ADD COLUMN tel TEXT")
-    except sqlite3.OperationalError:
-        pass
+        id_no = int(input("Üye ID: "))
+    except ValueError:
+        print("Geçersiz ID! Sayı olmalı.\n")
+        return
+    isim = input("Üye adı: ")
     try:
-        cursor.execute("ALTER TABLE uyeler ADD COLUMN adress TEXT")
-    except sqlite3.OperationalError:
-        pass
+        tel = int(input("Telefon: "))
+    except ValueError:
+        print("Geçersiz telefon numarası! Sadece sayı girin.\n")
+        return
+    adres = input("Adres: ")
+    uyeler.append({"id": id_no, "uye_adi": isim, "tel": tel, "adress": adres})
+    json_yaz(UYE_DOSYA, uyeler)
+    print(f"{isim} başarıyla eklendi.\n")
 
-    conn.commit()
-    conn.close()
+def uye_ara():
+    uyeler = json_oku(UYE_DOSYA)
+    isim = input("Aranacak üye adı: ")
+    bulunan = [u for u in uyeler if isim.lower() in u["uye_adi"].lower()]
+    if bulunan:
+        for u in bulunan:
+            print(f"ID: {u['id']}, Ad: {u['uye_adi']}, Tel: {u['tel']}, Adres: {u['adress']}")
+    else:
+        print("Üye bulunamadı.\n")
 
-# ---------------------------
-# JSON'dan Veri Yükleme
-# ---------------------------
-def jsondan_veri_yukle():
-    if not os.path.exists("uye.json"):
-        print("⚠️ uye.json bulunamadı, veri yüklenmedi.")
+def uye_sil():
+    uyeler = json_oku(UYE_DOSYA)
+    try:
+        id_no = int(input("Silinecek üye ID: "))
+    except ValueError:
+        print("Geçersiz ID! Sayı olmalı.\n")
+        return
+    yeni = [u for u in uyeler if u["id"] != id_no]
+    if len(yeni) < len(uyeler):
+        json_yaz(UYE_DOSYA, yeni)
+        print(f"ID {id_no} silindi.\n")
+    else:
+        print("Üye bulunamadı.\n")
+
+# ------------------ KİTAP İŞLEMLERİ ------------------
+def kitaplari_listele():
+    kitaplar = json_oku(KITAP_DOSYA)
+    if not kitaplar:
+        print("Kayıtlı kitap yok.\n")
         return
 
-    with open("uye.json", "r", encoding="utf-8") as f:
-        uyeler = json.load(f)
-
-    conn = baglanti()
-    cursor = conn.cursor()
-
-    for u in uyeler:
+    print("\n--- KİTAPLAR ---")
+    for k in kitaplar:
         try:
-            cursor.execute(
-                "INSERT INTO uyeler (id, ad, tel, adress) VALUES (?, ?, ?, ?)",
-                (u["id"], u["uye_adi"], str(u["tel"]), u["adress"])
-            )
-        except sqlite3.IntegrityError:
-            # Aynı ID varsa hata verme
-            pass
+            print(f"Barkod: {k['Barkod']}, Ad: {k['Kitap_Adi']}, Yazar: {k['Yazar']}, "
+                  f"Yayinevi: {k['Yayinevi']}, Fiyat: {k['Fiyat']} TL, Dil: {k['Dil']}")
+        except KeyError as e:
+            print(f"Uyarı: Eksik alan {e} olan kitap atlandı: {k}")
+    print()
 
-    conn.commit()
-    conn.close()
-    print("✅ uye.json'daki üyeler yüklendi.")
+def kitap_ekle():
+    kitaplar = json_oku(KITAP_DOSYA)
+    try:
+        barkod = int(input("Barkod: "))
+    except ValueError:
+        print("Geçersiz barkod! Sayı olmalı.\n")
+        return
+    if any(k['Barkod'] == barkod for k in kitaplar):
+        print("Bu barkod zaten mevcut!\n")
+        return
 
-# ---------------------------
-# Üye İşlemleri
-# ---------------------------
-def uye_ekle(ad, tel, adress):
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO uyeler (ad, tel, adress) VALUES (?, ?, ?)", (ad, tel, adress))
-    conn.commit()
-    conn.close()
-    print(f"✅ Üye eklendi: {ad}")
+    dil = input("Dil: ")
+    try:
+        fiyat_input = input("Fiyat: ").replace(',', '.')
+        fiyat = float(fiyat_input)
+    except ValueError:
+        print("Geçersiz fiyat! Sayı girin.\n")
+        return
 
-def uye_ara(kelime):
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM uyeler WHERE ad LIKE ?", (f"%{kelime}%",))
-    sonuc = cursor.fetchall()
-    conn.close()
-    return sonuc
+    ad = input("Kitap adı: ")
+    yayinevi = input("Yayınevi: ")
+    yazar = input("Yazar: ")
 
-def uye_sil(uye_id):
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM uyeler WHERE id=?", (uye_id,))
-    conn.commit()
-    conn.close()
-    print(f"🗑️ {uye_id} ID'li üye silindi.")
+    kitaplar.append({
+        "Barkod": barkod,
+        "Dil": dil,
+        "Fiyat": fiyat,
+        "Kitap_Adi": ad,
+        "Yayinevi": yayinevi,
+        "Yazar": yazar
+    })
+    json_yaz(KITAP_DOSYA, kitaplar)
+    print(f"{ad} başarıyla eklendi.\n")
 
-def uyeleri_listele():
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM uyeler")
-    uyeler = cursor.fetchall()
-    conn.close()
-    return uyeler
-
-# ---------------------------
-# Emanet İşlemleri
-# ---------------------------
-def kitap_ver(uye_id, kitap_id):
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM emanetler WHERE kitap_id=?", (kitap_id,))
-    if cursor.fetchone():
-        print("⚠ Bu kitap zaten ödünç verilmiş!")
+def kitap_ara():
+    kitaplar = json_oku(KITAP_DOSYA)
+    ad = input("Aranacak kitap adı: ")
+    bulunan = [k for k in kitaplar if ad.lower() in k["Kitap_Adi"].lower()]
+    if bulunan:
+        for k in bulunan:
+            try:
+                print(f"Barkod: {k['Barkod']}, Ad: {k['Kitap_Adi']}, Yazar: {k['Yazar']}, "
+                      f"Yayinevi: {k['Yayinevi']}, Fiyat: {k['Fiyat']} TL, Dil: {k['Dil']}")
+            except KeyError as e:
+                print(f"Uyarı: Eksik alan {e} olan kitap atlandı: {k}")
     else:
-        cursor.execute("INSERT INTO emanetler (uye_id, kitap_id) VALUES (?, ?)", (uye_id, kitap_id))
-        conn.commit()
-        print("✅ Kitap ödünç verildi.")
-    conn.close()
+        print("Kitap bulunamadı.\n")
 
-def kitap_iade(kitap_id):
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM emanetler WHERE kitap_id=?", (kitap_id,))
-    conn.commit()
-    conn.close()
-    print("✅ Kitap iade edildi.")
+def kitap_sil():
+    kitaplar = json_oku(KITAP_DOSYA)
+    try:
+        barkod = int(input("Silinecek kitabın barkod numarası: "))
+    except ValueError:
+        print("Geçersiz barkod! Sayı olmalı.\n")
+        return
+    yeni = [k for k in kitaplar if k["Barkod"] != barkod]
+    if len(yeni) < len(kitaplar):
+        json_yaz(KITAP_DOSYA, yeni)
+        print(f"Barkod {barkod} olan kitap silindi.\n")
+    else:
+        print("Kitap bulunamadı.\n")
 
-def kitap_takibi():
-    conn = baglanti()
-    cursor = conn.cursor()
-    cursor.execute("""
-    SELECT uyeler.ad, uyeler.tel, kitaplar.ad
-    FROM emanetler
-    JOIN uyeler ON emanetler.uye_id = uyeler.id
-    JOIN kitaplar ON emanetler.kitap_id = kitaplar.id
-    """)
-    kayitlar = cursor.fetchall()
-    conn.close()
-
-    return kayitlar
-
-# ---------------------------
-# Menü41
-# ---------------------------
+# ------------------ MENÜ ------------------
 def menu():
-    tablolar_olustur()
-    jsondan_veri_yukle()
-
     while True:
-        print("\n Lütfen Yapmak istediğiniz seçimin kodunu giriniz.")
-        print("-  ÜYELER            = 1             =   KİTAP ÖDÜNÇ VERME = 5")
-        print("-  ÜYE EKLE          = 2             =   KİTAP İADE        = 6")
-        print("-  ÜYE ARA           = 3             =   KİTAP TAKİBİ      = 7")
-        print("-  ÜYE SİL           = 4             =   ÇIKIŞ             = 0")
-        print("--------------------------------------")
+        print("""
+-----------------------------------------
+  UYELER                 KİTAPLAR
+  -----------------      -----------------
+  1 - Üyeleri Listele    5 - Kitapları Listele
+  2 - Üye Ekle           6 - Kitap Ekle
+  3 - Üye Ara            7 - Kitap Ara
+  4 - Üye Sil            8 - Kitap Sil
 
-        secim = input("Seçiminiz: ")
+  0 - Çıkış
+-----------------------------------------
+""")
+        secim = input("Seçim: ")
 
-        if secim == "1":
-            for u in uyeleri_listele():
-                print(f"{u[0]} - {u[1]} | Tel: {u[2]} | Adres: {u[3]}")
-
-        elif secim == "2":
-            ad = input("Üye adı: ")
-            tel = input("Telefon: ")
-            adress = input("Adres: ")
-            uye_ekle(ad, tel, adress)
-
-        elif secim == "3":
-            kelime = input("Aranacak kelime: ")
-            for u in uye_ara(kelime):
-                print(f"{u[0]} - {u[1]} | Tel: {u[2]} | Adres: {u[3]}")
-
-        elif secim == "4":
-            uye_id = int(input("Silinecek üye ID: "))
-            uye_sil(uye_id)
-
-        elif secim == "5":
-            uye_id = int(input("Üye ID: "))
-            kitap_id = int(input("Kitap ID: "))
-            kitap_ver(uye_id, kitap_id)
-
-        elif secim == "6":
-            kitap_id = int(input("İade edilecek kitap ID: "))
-            kitap_iade(kitap_id)
-
-        elif secim == "7":
-            kayitlar = kitap_takibi()
-            for k in kayitlar:
-                print(f"{k[0]} ({k[1]}) → {k[2]}")
-
+        if secim == "1": uyeleri_listele()
+        elif secim == "2": uye_ekle()
+        elif secim == "3": uye_ara()
+        elif secim == "4": uye_sil()
+        elif secim == "5": kitaplari_listele()
+        elif secim == "6": kitap_ekle()
+        elif secim == "7": kitap_ara()
+        elif secim == "8": kitap_sil()
         elif secim == "0":
             print("Çıkış yapılıyor...")
             break
         else:
-            print("❌ Geçersiz seçim!")
+            print("Geçersiz seçim.\n")
 
 if __name__ == "__main__":
     menu()
