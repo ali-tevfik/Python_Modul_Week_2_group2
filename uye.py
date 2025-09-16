@@ -172,37 +172,3 @@ def kitap_sil():
         print(f"Barkod {barkod} olan kitap silindi.\n")
     else:
         print("Kitap bulunamadı.\n")
-
-# ------------------ MENÜ ------------------
-def menu():
-    while True:
-        print("""
------------------------------------------
-  UYELER                 KİTAPLAR
-  -----------------      -----------------
-  1 - Üyeleri Listele    5 - Kitapları Listele
-  2 - Üye Ekle           6 - Kitap Ekle
-  3 - Üye Ara            7 - Kitap Ara
-  4 - Üye Sil            8 - Kitap Sil
-
-  0 - Çıkış
------------------------------------------
-""")
-        secim = input("Seçim: ")
-
-        if secim == "1": uyeleri_listele()
-        elif secim == "2": uye_ekle()
-        elif secim == "3": uye_ara()
-        elif secim == "4": uye_sil()
-        elif secim == "5": kitaplari_listele()
-        elif secim == "6": kitap_ekle()
-        elif secim == "7": kitap_ara()
-        elif secim == "8": kitap_sil()
-        elif secim == "0":
-            print("Çıkış yapılıyor...")
-            break
-        else:
-            print("Geçersiz seçim.\n")
-
-if __name__ == "__main__":
-    menu()
