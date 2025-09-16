@@ -8,6 +8,7 @@
         "Yazar": "Esra Ezmeci"
     },
     {
+<<<<<<< HEAD
         "Barkod": 9786057906465,
         "Dil": "Türkçe",
         "Fiyat": 20.4,
@@ -27,11 +28,17 @@
         "Barkod": 9789750751363,
         "Dil": "Türkçe",
         "Fiyat": 24.15,
+=======
+        "Barkod": 9789750751363,
+        "Dil": "Türkçe",
+        "Fiyat": 29.99,
+>>>>>>> origin/kitaplar
         "Kitap_Adi": "Okçu'nun Yolu",
         "Yayinevi": "Can Yayınları",
         "Yazar": "Paulo Coelho"
     },
     {
+<<<<<<< HEAD
         "Barkod": 9786258495423,
         "Dil": "Türkçe",
         "Fiyat": 34.3,
@@ -56,3 +63,21 @@
         "Yazar": "Anton Pavloviç Çehov"
     }
 ]
+=======
+        "Barkod": 9789754700114,
+        "Kitap_Adi": "İnce Memed",
+        "Yazar": "Yaşar Kemal",
+        "Yayinevi": "YKY",
+        "Dil": "Türkçe",
+        "Fiyat": 45.5
+    },
+    {
+        "Barkod": 0,
+        "Kitap_Adi": "maho",
+        "Yazar": "baba",
+        "Yayinevi": "Babacan",
+        "Dil": "Turkce kurtce karisik",
+        "Fiyat": 5.0
+    }
+]
+>>>>>>> origin/kitaplar
