@@ -21,7 +21,13 @@ def kitap_yaz(veri):
     with open(DOSYA, "w", encoding="utf-8") as f:
         json.dump(veri, f, indent=4, ensure_ascii=False)
 
-def kitap_ekle(kitap_adi, yazar, yayinevi, dil, fiyat, barkod=None):
+def kitap_ekle():
+    kitap_adi = input("kitap adi")
+    yazar= input("kitap yazar")
+    yayinevi= input("kitap yayinevi")
+    dil= input("kitap dil")
+    fiyat= input("kitap fiyat")
+    barkod= input("kitap barkod")
     veri = kitap_oku()
     for kitap in veri:
         if kitap["Kitap_Adi"].lower() == kitap_adi.lower():
@@ -38,7 +44,13 @@ def kitap_ekle(kitap_adi, yazar, yayinevi, dil, fiyat, barkod=None):
     kitap_yaz(veri)
     print(f"✅ '{kitap_adi}' eklendi.")
 
-def kitap_sil(kitap_adi):
+def kitap_listele():
+    veri = kitap_oku()
+    for kitap in veri:
+        print(f"Kitap ismi {kitap}")
+
+def kitap_sil():
+    kitap_adi =input("Silincek kitap adi")
     veri = kitap_oku()
     yeni_veri = [k for k in veri if k["Kitap_Adi"].lower() != kitap_adi.lower()]
     if len(veri) == len(yeni_veri):
@@ -47,17 +59,18 @@ def kitap_sil(kitap_adi):
         kitap_yaz(yeni_veri)
         print(f"🗑️ '{kitap_adi}' silindi.")
 
-def kitap_ara(aranan):
+def kitap_ara():
+    aranan =input("Arancak kitap adi")
     veri = kitap_oku()
-    bulunan = [k for k in veri if aranan.lower() in k["Kitap_Adi"].lower()]
-    return bulunan
+    bulunan = [k for k in veri if k["Kitap_Adi"].lower() == aranan.lower()]
+    print(bulunan)
 
-def kitap_guncelle(kitap_adi, yeni_bilgi: dict):
+def kitap_guncelle():
     veri = kitap_oku()
+    kitap_adi =input("guncellenecek kitap adi")
     bulundu = False
     for kitap in veri:
         if kitap["Kitap_Adi"].lower() == kitap_adi.lower():
-            kitap.update(yeni_bilgi)
             bulundu = True
             break
     if bulundu:

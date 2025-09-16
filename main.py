@@ -1,6 +1,7 @@
 import datetime
-from zaman import time
-
+from myTime import zaman
+from uye import *
+from kitap import *
 
 def mainMenu():
     while True:
@@ -31,17 +32,20 @@ def uyelik_islemleri():
         1 - Üye Ekle
         2 - Üye Sil
         3 - Üye Listele
-        4 - Ana Menüye Dön
+        4 - Üye Ara
+        5 - Ana Menüye Dön
         """)
         secim = input("İşlem seçiniz: ")
 
         if secim == "1":
-            print("Üye ekleme işlemi yapılacak (henüz yazmadık).")
+           uye_ekle()
         elif secim == "2":
-            print("Üye silme işlemi yapılacak.")
+           uye_sil()
         elif secim == "3":
-            print("Üye listeleme işlemi yapılacak.")
+           uyeleri_listele()
         elif secim == "4":
+            uye_ara()
+        elif secim == "5":
             break
         else:
             print("Hatalı seçim!")
@@ -59,16 +63,16 @@ def kitap_islemleri():
         6 - Kitap Geri Al
         7 - Ana Menüye Dön
         """)
-        secim = input("İşlem seçiniz: ")
+        secim = input("Islem seçiniz: ")
 
         if secim == "1":
-            print("Kitap ekleme işlemi yapılacak.")
+            kitap_ekle()
         elif secim == "2":
-            print("Kitap silme işlemi yapılacak.")
+            kitap_sil()
         elif secim == "3":
-            print("Kitap listeleme işlemi yapılacak.")
+            kitap_listele()
         elif secim == "4":
-            print("Kitap arama işlemi yapılacak.")
+           kitap_ara()
         elif secim == "5":
             baslangic, bitis = zaman()
             print(f"Kitap ödünç verildi. Başlangıç: {baslangic}, Teslim tarihi: {bitis}")
@@ -79,5 +83,4 @@ def kitap_islemleri():
         else:
             print("Hatalı seçim!")
 
-# Programı başlat
-uye_menu()
+mainMenu()
